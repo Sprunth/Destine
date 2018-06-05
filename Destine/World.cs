@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Destine
 {
@@ -9,6 +11,9 @@ namespace Destine
         public uint CurrentTime => clock.CurrentTick;
 
         private bool _simDone = false;
+        private Dictionary<TaskCompletionSource<bool>, uint> timeouts = new Dictionary<TaskCompletionSource<bool>, uint>();
+        
+        private List<Task> processes = new List<Task>();
 
         public World()
         {
@@ -26,6 +31,7 @@ namespace Destine
                 return false;
 
             clock.Tick();
+            CheckTimeouts();
 
             if (SimEndCondition != null && SimEndCondition.Invoke(this))
             {
@@ -33,6 +39,41 @@ namespace Destine
                 return false;
             }
             return true;
+        }
+
+        public void Run()
+        {
+            while (Tick())
+            {
+            }
+        }
+
+        public void Process(Task proc)
+        {
+            processes.Add(proc);
+        }
+
+        public Task Timeout(uint duration)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            timeouts[tcs] = CurrentTime + duration;
+            return tcs.Task;
+        }
+
+        private void CheckTimeouts()
+        {
+            var toRemove = new List<TaskCompletionSource<bool>>();
+            // todo: linq?
+            foreach (var tcs in timeouts.Keys)
+            {
+                if (timeouts[tcs] <= CurrentTime)
+                {
+                    toRemove.Add(tcs);
+                }
+            }
+
+            toRemove.ForEach(tcs => tcs.SetResult(true));
+            toRemove.ForEach(tcs => timeouts.Remove(tcs));
         }
     }
 }

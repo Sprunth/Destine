@@ -6,18 +6,18 @@ namespace Destine
 {
     public class Clock
     {
-        private readonly uint _tickIncrementSize;
+        public uint TickIncrementSize { get; }
         public uint CurrentTick { get; private set; }
 
         public Clock(uint startingTick = 0, uint tickIncrementSize = 1)
         {
-            _tickIncrementSize = tickIncrementSize;
+            TickIncrementSize = tickIncrementSize;
             CurrentTick = startingTick;
         }
 
         public void Tick()
         {
-            CurrentTick += _tickIncrementSize;
+            CurrentTick += TickIncrementSize;
         }
     }
 }

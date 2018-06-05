@@ -9,14 +9,21 @@ namespace Destine.Samples
             Console.WriteLine("Hello World!");
 
             var world = new World {SimEndCondition = w => w.CurrentTime == 5};
-            while (world.Tick())
-            {
-                Console.WriteLine($"World now on tick {world.CurrentTime}");
-
-            }
+            world.Run();
 
             Console.WriteLine($"World Ended on tick {world.CurrentTime}");
             Console.ReadLine();
+
+            Console.WriteLine("BasicCar");
+
+            var world2 = new World {SimEndCondition = w => w.CurrentTime == 15};
+            var basicCar = new BasicCar();
+            world2.Process(basicCar.Process(world2));
+            world2.Run();
+
+            Console.WriteLine("Done");
+            Console.ReadLine();
+
         }
     }
 }
