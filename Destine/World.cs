@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Nito.AsyncEx;
 
 namespace Destine
 {
@@ -49,18 +50,26 @@ namespace Destine
             }
         }
 
-        public Task Process(Task proc)
+        public Task Process(Task proc, CancellationTokenSource cts = null)
         {
+            // if no cancellation token passed in, just generate a dummy one and toss it
+            if (cts == null)
+                cts = new CancellationTokenSource();
+            
             processes.Add(proc);
-            return proc;
+            return Task.WhenAny(proc, cts.Token.AsTask());
         }
 
-        public Task Timeout(uint duration)
+        public Task Timeout(uint duration, CancellationTokenSource cts = null)
         {
+            // if no cancellation token passed in, just generate a dummy one and toss it
+            if (cts == null)
+                cts = new CancellationTokenSource();
 
             var tcs = new TaskCompletionSource<bool>();
             timeouts[tcs] = CurrentTime + duration;
-            return tcs.Task;
+            //return tcs.Task;
+            return Task.WhenAny(tcs.Task, cts.Token.AsTask()).ContinueWith(task => timeouts.Remove(tcs), TaskContinuationOptions.ExecuteSynchronously);  // todo: refactor/cleanup wiht CheckTimeouts
         }
 
         private void CheckTimeouts()

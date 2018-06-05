@@ -20,12 +20,11 @@ namespace Destine.Samples
 
         private readonly World _world;
         public Task Action { get; }
-        public CancellationTokenSource CancellationToken { get; }
+        public CancellationTokenSource CancellationToken { get; private set; }
 
         public ElectricCar(World world)
         {
             _world = world;
-            CancellationToken = new CancellationTokenSource();
             Action = _world.Process(Process());
         }
 
@@ -35,15 +34,9 @@ namespace Destine.Samples
             {
                 Console.WriteLine($"Start parking and charging at {_world.CurrentTime}");
                 uint chargeDuration = 5;
-                try
-                {
-                    await _world.Process(Charge(chargeDuration));
-                }
-                catch (OperationCanceledException e)
-                {
-                    Console.WriteLine("Was interrupted. Hope the battery is full enough...");
-                }
 
+                await _world.Process(Charge(chargeDuration));
+                
                 Console.WriteLine($"Start driving at {_world.CurrentTime}");
                 uint tripDuration = 2;
                 await _world.Timeout(tripDuration);
@@ -52,7 +45,12 @@ namespace Destine.Samples
 
         private async Task Charge(uint duration)
         {
-            await _world.Timeout(duration);
+            CancellationToken = new CancellationTokenSource();
+            await _world.Timeout(duration, CancellationToken);
+            if (CancellationToken.IsCancellationRequested)
+            {
+                Console.WriteLine("Was interrupted. Hope the battery is full enough...");
+            }
         }
     }
 
@@ -71,6 +69,7 @@ namespace Destine.Samples
         public async Task Process()
         {
             await _world.Timeout(3);
+            Console.WriteLine("Attempting to cancel");
             _car.CancellationToken.Cancel();
         }
     }
