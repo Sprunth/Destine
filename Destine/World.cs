@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Destine
@@ -48,13 +49,15 @@ namespace Destine
             }
         }
 
-        public void Process(Task proc)
+        public Task Process(Task proc)
         {
             processes.Add(proc);
+            return proc;
         }
 
         public Task Timeout(uint duration)
         {
+
             var tcs = new TaskCompletionSource<bool>();
             timeouts[tcs] = CurrentTime + duration;
             return tcs.Task;
