@@ -29,6 +29,7 @@ namespace Destine
         /// <returns>True if world is still alive (end condition not satisfied)</returns>
         public bool Tick()
         {
+            Console.WriteLine($"Now on world tick {CurrentTime}");
             if (_simDone)
                 return false;
 
@@ -45,8 +46,15 @@ namespace Destine
 
         public void Run()
         {
+            CheckTimeouts();
             while (Tick())
             {
+                if (processes.TrueForAll(task => task.Status == TaskStatus.RanToCompletion))
+                {
+                    Console.WriteLine("No more processes, ending world");
+                    _simDone = true;
+                    
+                }
             }
         }
 
