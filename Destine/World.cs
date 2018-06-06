@@ -55,9 +55,9 @@ namespace Destine
             // if no cancellation token passed in, just generate a dummy one and toss it
             if (cts == null)
                 cts = new CancellationTokenSource();
-            
+            var ctts = new CancellationTokenTaskSource<bool>(cts.Token);
             processes.Add(proc);
-            return Task.WhenAny(proc, cts.Token.AsTask());
+            return Task.WhenAny(proc, ctts.Task);
         }
 
         public Task Timeout(uint duration, CancellationTokenSource cts = null)
@@ -68,8 +68,8 @@ namespace Destine
 
             var tcs = new TaskCompletionSource<bool>();
             timeouts[tcs] = CurrentTime + duration;
-            //return tcs.Task;
-            return Task.WhenAny(tcs.Task, cts.Token.AsTask()).ContinueWith(task => timeouts.Remove(tcs), TaskContinuationOptions.ExecuteSynchronously);  // todo: refactor/cleanup wiht CheckTimeouts
+            var ctts = new CancellationTokenTaskSource<bool>(cts.Token);
+            return Task.WhenAny(tcs.Task, ctts.Task).ContinueWith(task => timeouts.Remove(tcs), TaskContinuationOptions.ExecuteSynchronously);  // todo: refactor/cleanup wiht CheckTimeouts
         }
 
         private void CheckTimeouts()

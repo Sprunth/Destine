@@ -69,7 +69,6 @@ namespace Destine.Samples
         public async Task Process()
         {
             await _world.Timeout(3);
-            Console.WriteLine("Attempting to cancel");
             _car.CancellationToken.Cancel();
         }
     }
