@@ -11,6 +11,7 @@ namespace Destine
         public Resource(ResourceManager resourceManager)
         {
             _resourceManager = resourceManager;
+            Console.WriteLine($"Resource created: {this.GetHashCode()}");
         }
 
         public void Release()

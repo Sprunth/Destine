@@ -13,9 +13,12 @@ namespace Destine
         public uint CurrentTime => clock.CurrentTick;
 
         private bool _simDone = false;
-        private Dictionary<TaskCompletionSource<bool>, uint> timeouts = new Dictionary<TaskCompletionSource<bool>, uint>();
+        /// <summary>
+        /// Contains all the Timeout events that processes have configured. Key'ed to cancellation sources (set true on timeout), valued to when (clock) the timeout should get triggered
+        /// </summary>
+        private readonly Dictionary<TaskCompletionSource<bool>, uint> timeouts = new Dictionary<TaskCompletionSource<bool>, uint>();
         
-        private List<Task> processes = new List<Task>();
+        private readonly List<Task> processes = new List<Task>();
 
         public World()
         {
@@ -29,11 +32,12 @@ namespace Destine
         /// <returns>True if world is still alive (end condition not satisfied)</returns>
         public bool Tick()
         {
-            Console.WriteLine($"Now on world tick {CurrentTime}");
+            
             if (_simDone)
                 return false;
 
             clock.Tick();
+            Console.WriteLine($" -- Now on world tick {CurrentTime} --");
             CheckTimeouts();
 
             if (SimEndCondition != null && SimEndCondition.Invoke(this))
@@ -77,7 +81,7 @@ namespace Destine
             var tcs = new TaskCompletionSource<bool>();
             timeouts[tcs] = CurrentTime + duration;
             var ctts = new CancellationTokenTaskSource<bool>(cts.Token);
-            return Task.WhenAny(tcs.Task, ctts.Task).ContinueWith(task => timeouts.Remove(tcs), TaskContinuationOptions.ExecuteSynchronously);  // todo: refactor/cleanup wiht CheckTimeouts
+            return Task.WhenAny(tcs.Task, ctts.Task).ContinueWith(task => timeouts.Remove(tcs), TaskContinuationOptions.ExecuteSynchronously);  // todo: refactor/cleanup with CheckTimeouts
         }
 
         private void CheckTimeouts()
