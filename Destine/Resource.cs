@@ -18,5 +18,10 @@ namespace Destine
         {
             _resourceManager.ReturnResource();
         }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode() / 10000;
+        }
     }
 }

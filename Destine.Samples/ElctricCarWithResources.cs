@@ -20,7 +20,7 @@ namespace Destine.Samples
             var world = new World {};
             var batteryCharingStationManager = new ResourceManager(2);
             //for (uint i = 0; i < 4; i++)
-            foreach (var i in Enumerable.Range(0,4).Reverse())
+            foreach (var i in Enumerable.Range(0,3).Reverse())
             {
                 var car = new ElctricCarWithResources(world, $"Car {i}", batteryCharingStationManager, (uint)i * 2, 5);
                 world.Process(car.Process());
@@ -45,8 +45,10 @@ namespace Destine.Samples
         {
             await _world.Timeout(_drivingTime);
             Console.WriteLine($"{_name} arriving at {_world.CurrentTime}");
+
             var batteryStation = await _batteryChargingStation.Request();
             Console.WriteLine($"{_name} starting to charge at Time {_world.CurrentTime}, stations {batteryStation.GetHashCode()}");
+            _batteryChargingStation.PrintStatus();
             await _world.Timeout(_chargeDuration);
             Console.WriteLine($"{_name} leaving the bcs at {_world.CurrentTime}");
             batteryStation.Release();
