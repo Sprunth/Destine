@@ -26,6 +26,12 @@ namespace Destine.Samples
                 world.Process(car.Process());
             }
 
+            world.OnWorldTick = (time) =>
+            {
+                Console.Write($"TICK {time}| ");
+                batteryCharingStationManager.PrintStatus();
+                //Console.WriteLine($"  - Bag has stuffs: {batteryCharingStationManager._resources.OutputAvailable()}");
+            };
             world.Run();
             Console.ReadLine();
         }

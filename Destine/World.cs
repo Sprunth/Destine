@@ -9,9 +9,10 @@ namespace Destine
     public class World
     {
         public Func<World, bool> SimEndCondition = world => false;
-        private readonly Clock clock;
         public uint CurrentTime => clock.CurrentTick;
+        public Action<uint> OnWorldTick { get; set; }
 
+        private readonly Clock clock;
         private bool _simDone = false;
         /// <summary>
         /// Contains all the Timeout events that processes have configured. Key'ed to cancellation sources (set true on timeout), valued to when (clock) the timeout should get triggered
@@ -37,6 +38,7 @@ namespace Destine
                 return false;
 
             clock.Tick();
+            OnWorldTick(CurrentTime);
             Console.WriteLine($" -- Now on world tick {CurrentTime} --");
             CheckTimeouts();
 

@@ -12,12 +12,12 @@ namespace Destine
 {
     public class ResourceManager
     {
-        private readonly AsyncCollection<Resource> _resources;
-        private readonly ConcurrentBag<Resource> _internalBag;
+        public readonly AsyncCollection<Resource> _resources;
+        private readonly ConcurrentQueue<Resource> _internalBag;
 
         public ResourceManager(int resourceCount = 1)
         {
-            _internalBag= new ConcurrentBag<Resource>();
+            _internalBag= new ConcurrentQueue<Resource>();
             _resources = new AsyncCollection<Resource>(_internalBag);
             for (var i = 0; i < resourceCount; i++)
             {
@@ -31,7 +31,6 @@ namespace Destine
             Console.WriteLine($"Someone requested a resource. {BagContents()}");
             //await _resources.OutputAvailableAsync();
             //Console.WriteLine($"Resource is avaliable to take. {BagContents()}");
-            Task.Yield();
             return await _resources.TakeAsync();
         }
 
