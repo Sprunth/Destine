@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Destine.Samples
 {
@@ -17,18 +18,20 @@ namespace Destine.Samples
         public static void Run()
         {
             Console.WriteLine("ElectricCarWithResources");
-            var world = new World {};
+            var world = new World {SimEndCondition = world1 => world1.CurrentTime == 15};
             var batteryCharingStationManager = new ResourceManager(2);
-            //for (uint i = 0; i < 4; i++)
-            foreach (var i in Enumerable.Range(0,3).Reverse())
+            var cars = new List<ElctricCarWithResources>();
+            foreach (var i in Enumerable.Range(0, 3))
             {
                 var car = new ElctricCarWithResources(world, $"Car {i}", batteryCharingStationManager, (uint)i * 2, 5);
+                cars.Add(car);
                 world.Process(car.Process());
+
             }
 
             world.OnWorldTick = (time) =>
             {
-                Console.Write($"TICK {time}| ");
+                Console.WriteLine($"-- TICK {time}| ");
                 batteryCharingStationManager.PrintStatus();
                 //Console.WriteLine($"  - Bag has stuffs: {batteryCharingStationManager._resources.OutputAvailable()}");
             };
@@ -54,11 +57,10 @@ namespace Destine.Samples
 
             var batteryStation = await _batteryChargingStation.Request();
             Console.WriteLine($"{_name} starting to charge at Time {_world.CurrentTime}, stations {batteryStation.GetHashCode()}");
-            _batteryChargingStation.PrintStatus();
             await _world.Timeout(_chargeDuration);
+
             Console.WriteLine($"{_name} leaving the bcs at {_world.CurrentTime}");
             batteryStation.Release();
         }
-
     }
 }

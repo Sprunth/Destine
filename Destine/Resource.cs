@@ -11,12 +11,12 @@ namespace Destine
         public Resource(ResourceManager resourceManager)
         {
             _resourceManager = resourceManager;
-            Console.WriteLine($"Resource created: {this.GetHashCode()}");
+            //Console.WriteLine($"Resource created: {this.GetHashCode()}");
         }
 
         public void Release()
         {
-            _resourceManager.ReturnResource();
+            _resourceManager.ReturnResource(this);
         }
 
         public override int GetHashCode()

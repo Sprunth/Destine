@@ -6,45 +6,48 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Nito.AsyncEx;
 
 namespace Destine
 {
     public class ResourceManager
     {
-        public readonly AsyncCollection<Resource> _resources;
-        private readonly ConcurrentQueue<Resource> _internalBag;
+        private readonly AsyncCollection<Resource> _buff;
+        private readonly ConcurrentBag<Resource> _internalBag;
+
+        private readonly HashSet<Resource> _debugMasterResourceSet;
 
         public ResourceManager(int resourceCount = 1)
         {
-            _internalBag= new ConcurrentQueue<Resource>();
-            _resources = new AsyncCollection<Resource>(_internalBag);
+            _debugMasterResourceSet = new HashSet<Resource>();
+            
+            _internalBag = new ConcurrentBag<Resource>();
+            _buff = new AsyncCollection<Resource>(_internalBag);
             for (var i = 0; i < resourceCount; i++)
             {
-                QueueResource();
+                QueueResource(new Resource(this));
             }
             Console.WriteLine($"ResourceManager constructed with internal bag {BagContents()}");
+            
         }
 
         public async Task<Resource> Request()
         {
-            Console.WriteLine($"Someone requested a resource. {BagContents()}");
-            //await _resources.OutputAvailableAsync();
-            //Console.WriteLine($"Resource is avaliable to take. {BagContents()}");
-            return await _resources.TakeAsync();
+            return await _buff.TakeAsync();
         }
 
-        public void ReturnResource()
+        public void ReturnResource(Resource r)
         {
-            // ugly to requeue the resource and mis-use the using/dispose pattern
-            // so we just queue a new resource
-            QueueResource();
+            // ugly to mis-use the using/dispose pattern
+            QueueResource(r);
             Console.WriteLine($"New Resource Queued {BagContents()}");
         }
 
-        private void QueueResource()
+        private void QueueResource(Resource r)
         {
-            _resources.Add(new Resource(this));
+            _buff.Add(r);
+            _debugMasterResourceSet.Add(r);
         }
 
         public void PrintStatus()
@@ -54,12 +57,7 @@ namespace Destine
 
         private string BagContents()
         {
-            var ret = $"Bag | size: {_internalBag.Count} |";
-            foreach (var resource in _internalBag)
-            {
-                ret += $"{resource.GetHashCode()},";
-            }
-            
+            var ret = $"Bag | size: {_internalBag.Count} | this: {this.GetHashCode() / 1000}";
             return ret;
         }
     }

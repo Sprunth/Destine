@@ -33,13 +33,11 @@ namespace Destine
         /// <returns>True if world is still alive (end condition not satisfied)</returns>
         public bool Tick()
         {
-            
             if (_simDone)
                 return false;
 
             clock.Tick();
             OnWorldTick(CurrentTime);
-            Console.WriteLine($" -- Now on world tick {CurrentTime} --");
             CheckTimeouts();
 
             if (SimEndCondition != null && SimEndCondition.Invoke(this))
@@ -55,7 +53,7 @@ namespace Destine
             CheckTimeouts();
             while (Tick())
             {
-                if (processes.TrueForAll(task => task.Status == TaskStatus.RanToCompletion))
+                if (SimEndCondition == null && processes.TrueForAll(task => task.Status == TaskStatus.RanToCompletion))
                 {
                     Console.WriteLine("No more processes, ending world");
                     _simDone = true;
@@ -98,8 +96,11 @@ namespace Destine
                 }
             }
 
-            toRemove.ForEach(tcs => tcs.SetResult(true));
-            toRemove.ForEach(tcs => timeouts.Remove(tcs));
+            toRemove.ForEach(tcs =>
+            {
+                tcs.SetResult(true);
+                timeouts.Remove(tcs);
+            });
         }
     }
 }
