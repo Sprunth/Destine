@@ -9,13 +9,17 @@ namespace Destine
     public class World
     {
         public Func<World, bool> SimEndCondition = world => false;
-        private readonly Clock clock;
         public uint CurrentTime => clock.CurrentTick;
+        public Action<uint> OnWorldTick { get; set; }
 
+        private readonly Clock clock;
         private bool _simDone = false;
-        private Dictionary<TaskCompletionSource<bool>, uint> timeouts = new Dictionary<TaskCompletionSource<bool>, uint>();
+        /// <summary>
+        /// Contains all the Timeout events that processes have configured. Key'ed to cancellation sources (set true on timeout), valued to when (clock) the timeout should get triggered
+        /// </summary>
+        private readonly Dictionary<TaskCompletionSource<bool>, uint> timeouts = new Dictionary<TaskCompletionSource<bool>, uint>();
         
-        private List<Task> processes = new List<Task>();
+        private readonly List<Task> processes = new List<Task>();
 
         public World()
         {
@@ -33,6 +37,7 @@ namespace Destine
                 return false;
 
             clock.Tick();
+            OnWorldTick(CurrentTime);
             CheckTimeouts();
 
             if (SimEndCondition != null && SimEndCondition.Invoke(this))
@@ -45,8 +50,15 @@ namespace Destine
 
         public void Run()
         {
+            CheckTimeouts();
             while (Tick())
             {
+                if (SimEndCondition == null && processes.TrueForAll(task => task.Status == TaskStatus.RanToCompletion))
+                {
+                    Console.WriteLine("No more processes, ending world");
+                    _simDone = true;
+                    
+                }
             }
         }
 
@@ -69,7 +81,7 @@ namespace Destine
             var tcs = new TaskCompletionSource<bool>();
             timeouts[tcs] = CurrentTime + duration;
             var ctts = new CancellationTokenTaskSource<bool>(cts.Token);
-            return Task.WhenAny(tcs.Task, ctts.Task).ContinueWith(task => timeouts.Remove(tcs), TaskContinuationOptions.ExecuteSynchronously);  // todo: refactor/cleanup wiht CheckTimeouts
+            return Task.WhenAny(tcs.Task, ctts.Task).ContinueWith(task => timeouts.Remove(tcs), TaskContinuationOptions.ExecuteSynchronously);  // todo: refactor/cleanup with CheckTimeouts
         }
 
         private void CheckTimeouts()
@@ -84,8 +96,11 @@ namespace Destine
                 }
             }
 
-            toRemove.ForEach(tcs => tcs.SetResult(true));
-            toRemove.ForEach(tcs => timeouts.Remove(tcs));
+            toRemove.ForEach(tcs =>
+            {
+                tcs.SetResult(true);
+                timeouts.Remove(tcs);
+            });
         }
     }
 }

@@ -6,12 +6,13 @@ namespace Destine.Samples
     {
         static void Main(string[] args)
         {
-            SimpleExample.Run();
+            //SimpleExample.Run();
 
-            BasicCar.Run();
+            //BasicCar.Run();
 
-            ElectricCar.Run();
-            
+            //ElectricCar.Run();
+
+            ElctricCarWithResources.Run();
         }
     }
 }
